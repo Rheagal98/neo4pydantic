@@ -26,6 +26,9 @@ dependencies = [
     "pydantic>=2.0.0",
     "neo4j>=5.0.0",
 ]
+[project.urls]
+Source = "https://github.com/Rheagal98/neo4pydantic#"
+Tracker = "https://github.com/Rheagal98/neo4pydantic/issues"
 
 [project.optional-dependencies]
 dev = [

@@ -2,6 +2,9 @@
 
 A Pydantic-based Neo4j ORM with async/sync support.
 
+[![PyPI Release](https://img.shields.io/pypi/v/neo4pydantic)](https://pypi.org/project/neo4pydantic/)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repo-blue?logo=github)](https://github.com/Rheagal98/neo4pydantic)
+
 ## Overview
 
 **neo4pydantic** provides an easy way to define Neo4j nodes and relationships as Pydantic models, and interact with a Neo4j database using both synchronous and asynchronous clients. It supports automatic type conversion, unique and indexed fields, and convenient CRUD operations.
