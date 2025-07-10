@@ -39,7 +39,7 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["mylib*"]
+include = ["neo4pydantic*"]
 
 [tool.black]
 line-length = 100
