@@ -1,22 +1,25 @@
 from typing import Any, Dict, Optional, ClassVar, List
 from pydantic import ConfigDict
-from .custom_pydantic_base_model import CustomBaseModel
+from abc import ABC, abstractmethod
+from .custom_base_model import CustomBaseModel
+from .index_registry import index_registry, Index
 
-
-class BaseEntity(CustomBaseModel):
+class BaseEntity(CustomBaseModel, ABC):
     """Base class for all Neo4j entities"""
 
     model_config = ConfigDict(validate_assignment=True, arbitrary_types_allowed=True)
 
     # Class-level configuration
     __label__: ClassVar[Optional[str]] = None
-    __unique_fields__: ClassVar[List[str]] = []
-    __indexed_fields__: ClassVar[List[str]] = []
+    __unique_fields__: ClassVar[List[str]]
+    __indexes__: ClassVar[List[Index]] = []
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if cls.__label__ is None:
             cls.__label__ = cls.__name__
+
+        cls._register_indexes()
 
     @classmethod
     def get_label(cls) -> str:
@@ -41,6 +44,12 @@ class BaseEntity(CustomBaseModel):
     def from_record(cls, record: Dict[str, Any]) -> "BaseEntity":
         """Create instance from Neo4j record"""
         return cls.model_validate(record)
+
+    @classmethod
+    @abstractmethod
+    def _register_indexes(cls):
+        """Register indexes for this entity class"""
+        pass
 
 
 class BaseNode(BaseEntity):
@@ -92,6 +101,10 @@ class BaseNode(BaseEntity):
         query = f"MATCH (n:{label} {{{prop_str}}}) RETURN n"
         return query, props
 
+    @classmethod
+    def _register_indexes(cls):
+        """Register indexes for this node class"""
+        index_registry.register_node_indexes(cls.get_label(), cls.__indexes__)
 
 class BaseRelationship(BaseEntity):
     """Base class for Neo4j relationships"""
@@ -138,3 +151,8 @@ class BaseRelationship(BaseEntity):
         prop_str = ", ".join(f"{k}: ${k}" for k in props.keys())
         query = f"MATCH {from_node_match}, {to_node_match} {generate_type} (a)-[r:{rel_type} {{{prop_str}}}]->(b)"
         return query, props
+
+    @classmethod
+    def _register_indexes(cls):
+        """Register indexes for this entity class"""
+        index_registry.register_relationship_indexes(cls.get_type(), cls.__indexes__)

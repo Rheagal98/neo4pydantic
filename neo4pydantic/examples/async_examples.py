@@ -1,6 +1,7 @@
 import asyncio
 from typing import Optional
-from neo4pydantic.async_ import BaseNode, BaseRelationship, AsyncClient
+from neo4pydantic.async_ import BaseNode, BaseRelationship, AsyncNeo4jClient, IndexManager
+from neo4pydantic import Index
 import logging
 
 logger = logging.getLogger(__name__)
@@ -9,7 +10,7 @@ logger = logging.getLogger(__name__)
 class Person(BaseNode):
     __label__ = "Person"
     __unique_fields__ = ["email"]
-    __indexed_fields__ = ["name", "email"]
+    __indexes__ = [Index(properties=["email"])]
 
     name: str
     email: str
@@ -28,6 +29,7 @@ class Company(BaseNode):
 
 class WorksAt(BaseRelationship):
     __type__ = "WORKS_AT"
+    __indexes__ = [Index(properties=["position", "start_date"])]
 
     position: str
     start_date: Optional[str] = None
@@ -35,9 +37,11 @@ class WorksAt(BaseRelationship):
 
 
 async def main():
-    client = AsyncClient(
+    client = AsyncNeo4jClient(
         uri="bolt://localhost:7687", user="neo4j", password="neo4jadmin"
     )
+    await client.connect()
+    await IndexManager(driver=await client.get_driver()).sync_indexes()
 
     async with client.session() as session:
         # Create nodes
@@ -70,9 +74,7 @@ async def main():
 
         # Query nodes
         people = await Person.find_by(session, city="San Francisco")
-        logger.info(f"Person info {people}")
-        jane = await Person.find_one_by(session, email="jane@example.com")
-        logger.info(f"Jane info {jane}")
+        jane = await Person.find_one_by(session, email="janea@example.com")
 
 
 if __name__ == "__main__":

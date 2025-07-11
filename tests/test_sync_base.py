@@ -94,15 +94,14 @@ def test_find_by_nodes():
 
 def test_find_one_by_node():
     session = MagicMock()
-    session.run.return_value = [
-        MagicMock(
+    session.run.return_value.single.return_value = MagicMock(
             **{
                 "__getitem__.side_effect": lambda k: {"id": 1, "name": "foo"}
                 if k == "n"
                 else None
             }
-        ),
-    ]
+        )
+
     node = DummyNode.find_one_by(session, name="foo")
     assert isinstance(node, DummyNode)
     assert node.name == "foo"
@@ -110,7 +109,7 @@ def test_find_one_by_node():
 
 def test_find_one_by_node_none():
     session = MagicMock()
-    session.run.return_value = []
+    session.run.return_value.single.return_value = {}
     node = DummyNode.find_one_by(session, name="foo")
     assert node is None
 

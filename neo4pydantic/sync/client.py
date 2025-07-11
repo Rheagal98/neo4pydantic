@@ -3,7 +3,7 @@ from neo4j import GraphDatabase, Driver
 from contextlib import contextmanager
 
 
-class SyncClient:
+class Neo4jClient:
     """Synchronous Neo4j client"""
 
     def __init__(self, uri: str, user: str, password: str, database: str = "neo4j"):
@@ -19,6 +19,9 @@ class SyncClient:
             self._driver = GraphDatabase.driver(
                 self.uri, auth=(self.user, self.password)
             )
+        return self._driver
+
+    def get_driver(self) -> Driver:
         return self._driver
 
     def close(self):

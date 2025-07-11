@@ -25,10 +25,13 @@ class BaseNode(CoreBaseNode):
 
         return self
 
-    async def delete(self, session: AsyncSession) -> bool:
+    async def delete(self, session: AsyncSession, detach_mode: bool = False) -> bool:
         """Delete node from Neo4j database"""
         query, params = self.get_find_query()
-        delete_query = query.replace("RETURN n", "DELETE n")
+        if detach_mode:
+            delete_query = query.replace("RETURN n", "DETACH DELETE n")
+        else:
+            delete_query = query.replace("RETURN n", "DETACH DELETE n")
 
         result = await session.run(delete_query, params)
         summary = await result.consume()
@@ -65,9 +68,24 @@ class BaseNode(CoreBaseNode):
 
     @classmethod
     async def find_one_by(cls, session: AsyncSession, **kwargs) -> Optional["BaseNode"]:
-        """Find single node by properties"""
-        nodes = await cls.find_by(session, **kwargs)
-        return nodes[0] if nodes else None
+        """Find a single node by properties"""
+        label = cls.get_label()
+
+        if not kwargs:
+            query = f"MATCH (n:{label}) RETURN n LIMIT 1"
+            params = {}
+        else:
+            prop_str = ", ".join(f"{k}: ${k}" for k in kwargs.keys())
+            query = f"MATCH (n:{label} {{{prop_str}}}) RETURN n LIMIT 1"
+            params = kwargs
+
+        result = await session.run(query, params)
+        record = await result.single()
+
+        if record and record["n"]:
+            return cls.from_record(dict(record["n"]))
+
+        return None
 
 
 class BaseRelationship(CoreBaseRelationship):

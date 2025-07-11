@@ -94,8 +94,8 @@ async def test_find_by_nodes():
 @pytest.mark.asyncio
 async def test_find_one_by_node():
     session = AsyncMock()
-    session.run.return_value.data = AsyncMock(
-        return_value=[{"n": {"id": 1, "name": "foo"}}]
+    session.run.return_value.single = AsyncMock(
+        return_value={"n": {"id": 1, "name": "foo"}}
     )
     node = await DummyNode.find_one_by(session, name="foo")
     assert isinstance(node, DummyNode)
@@ -105,7 +105,7 @@ async def test_find_one_by_node():
 @pytest.mark.asyncio
 async def test_find_one_by_node_none():
     session = AsyncMock()
-    session.run.return_value.data = AsyncMock(return_value=[])
+    session.run.return_value.single = AsyncMock(return_value={})
     node = await DummyNode.find_one_by(session, name="foo")
     assert node is None
 

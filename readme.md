@@ -61,38 +61,108 @@ class WorksAt(BaseRelationship):
 ### 2. Synchronous Usage
 
 ```python
-from neo4pydantic.sync import SyncClient
+from neo4pydantic.sync import Neo4jClient
 
-client = SyncClient(uri="bolt://localhost:7687", user="neo4j", password="your_password")
+client = Neo4jClient(uri="bolt://localhost:7687", user="neo4j", password="your_password")
 with client.session() as session:
-    person = Person(name="John Doe", email="john@example.com", age=30, city="New York").save(session)
-    company = Company(name="Tech Corp", industry="Technology", founded_year=2010).save(session)
-    relationship = WorksAt(position="Software Engineer", start_date="2023-01-15", salary=75000)
-    relationship.save(session, person, company)
-    # Query
-    people = Person.find_by(session, city="New York")
+  person = Person(name="John Doe", email="john@example.com", age=30, city="New York").save(session)
+  company = Company(name="Tech Corp", industry="Technology", founded_year=2010).save(session)
+  relationship = WorksAt(position="Software Engineer", start_date="2023-01-15", salary=75000)
+  relationship.save(session, person, company)
+  # Query
+  people = Person.find_by(session, city="New York")
 ```
 
 ### 3. Asynchronous Usage
 
 ```python
 import asyncio
-from neo4pydantic.async_ import AsyncClient, BaseNode, BaseRelationship
+from neo4pydantic.async_ import AsyncNeo4jClient, BaseNode, BaseRelationship
+
 
 async def main():
-    client = AsyncClient(uri="bolt://localhost:7687", user="neo4j", password="your_password")
-    async with client.session() as session:
-        person = Person(name="Jane Doe", email="jane@example.com", age=28, city="San Francisco")
-        person = await person.save(session)
-        company = Company(name="Startup Inc", industry="Technology", founded_year=2020)
-        company = await company.save(session)
-        relationship = WorksAt(position="Senior Developer", start_date="2023-03-01", salary=90000)
-        await relationship.save(session, person, company)
-        # Query
-        people = await Person.find_by(session, city="San Francisco")
+  client = AsyncNeo4jClient(uri="bolt://localhost:7687", user="neo4j", password="your_password")
+  async with client.session() as session:
+    person = Person(name="Jane Doe", email="jane@example.com", age=28, city="San Francisco")
+    person = await person.save(session)
+    company = Company(name="Startup Inc", industry="Technology", founded_year=2020)
+    company = await company.save(session)
+    relationship = WorksAt(position="Senior Developer", start_date="2023-03-01", salary=90000)
+    await relationship.save(session, person, company)
+    # Query
+    people = await Person.find_by(session, city="San Francisco")
+
 
 asyncio.run(main())
 ```
+
+## Querying and Advanced Usage
+
+### Find Multiple Nodes (`find_by`)
+
+**Sync:**
+```python
+# Find all people in New York
+people = Person.find_by(session, city="New York")
+for person in people:
+    print(person)
+```
+
+**Async:**
+```python
+# Find all people in San Francisco
+people = await Person.find_by(session, city="San Francisco")
+for person in people:
+    print(person)
+```
+
+---
+
+### Find a Single Node (`find_one_by`)
+
+**Sync:**
+```python
+# Find a person by email
+john = Person.find_one_by(session, email="john@example.com")
+print(john)
+```
+
+**Async:**
+```python
+# Find a person by email
+jane = await Person.find_one_by(session, email="jane@example.com")
+print(jane)
+```
+
+---
+
+### Create Relationship with Custom Parameters (`save_with_custom_params`)
+
+**Sync:**
+```python
+relationship = WorksAt(position="Junior Developer", start_date="2022-03-01", salary=90000)
+relationship.save_with_custom_params(
+    session,
+    from_node_label=person.get_label(),
+    to_node_label=company.get_label(),
+    from_node_params={"email": person.email},
+    to_node_params={"name": company.name},
+)
+```
+
+**Async:**
+```python
+relationship = WorksAt(position="Junior Developer", start_date="2022-03-01", salary=90000)
+await relationship.save_with_custom_params(
+    session,
+    from_node_label=person.get_label(),
+    to_node_label=company.get_label(),
+    from_node_params={"email": person.email},
+    to_node_params={"name": company.name},
+)
+```
+
+---
 
 ## Directory Structure
 

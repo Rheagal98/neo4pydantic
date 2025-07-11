@@ -1,9 +1,9 @@
 from datetime import datetime, date, time, timedelta
-from neo4pydantic.core import custom_pydantic_base_model
+from neo4pydantic.core import custom_base_model
 from neo4j import time as neo4jtime
 
 
-class DummyModel(custom_pydantic_base_model.CustomBaseModel):
+class DummyModel(custom_base_model.CustomBaseModel):
     dt: datetime = None
     d: date = None
     t: time = None

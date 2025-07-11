@@ -4,11 +4,11 @@ from unittest.mock import patch, MagicMock
 
 def test_connect_creates_driver():
     with patch(
-        "neo4j_models.sync.client.GraphDatabase.driver", new_callable=MagicMock
+        "neo4pydantic.sync.client.GraphDatabase.driver", new_callable=MagicMock
     ) as mock_driver:
         driver = MagicMock()
         mock_driver.return_value = driver
-        c = client.SyncClient("bolt://localhost", "user", "pass")
+        c = client.Neo4jClient("bolt://localhost", "user", "pass")
         res = c.connect()
         assert c._driver is driver
         assert res is driver
@@ -16,14 +16,14 @@ def test_connect_creates_driver():
 
 
 def test_connect_reuses_existing_driver():
-    c = client.SyncClient("bolt://localhost", "user", "pass")
+    c = client.Neo4jClient("bolt://localhost", "user", "pass")
     c._driver = MagicMock()
     res = c.connect()
     assert res is c._driver
 
 
 def test_close_closes_driver():
-    c = client.SyncClient("bolt://localhost", "user", "pass")
+    c = client.Neo4jClient("bolt://localhost", "user", "pass")
     mock_driver = MagicMock()
     c._driver = mock_driver
     c.close()
@@ -32,13 +32,13 @@ def test_close_closes_driver():
 
 
 def test_close_no_driver():
-    c = client.SyncClient("bolt://localhost", "user", "pass")
+    c = client.Neo4jClient("bolt://localhost", "user", "pass")
     c._driver = None
     c.close()  # Should not raise
 
 
 def test_session_context_manager():
-    c = client.SyncClient("bolt://localhost", "user", "pass")
+    c = client.Neo4jClient("bolt://localhost", "user", "pass")
     mock_driver = MagicMock()
     mock_session = MagicMock()
     c._driver = mock_driver
@@ -49,7 +49,7 @@ def test_session_context_manager():
 
 
 def test_context_manager():
-    c = client.SyncClient("bolt://localhost", "user", "pass")
+    c = client.Neo4jClient("bolt://localhost", "user", "pass")
     c.close = MagicMock()
     with c as inst:
         assert inst is c
