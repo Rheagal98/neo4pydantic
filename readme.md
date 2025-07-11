@@ -21,9 +21,6 @@ A Pydantic-based Neo4j ORM with async/sync support.
 
 ```bash
 pip install neo4pydantic
-
-# For development and testing:
-pip install -r requirements.txt
 ```
 
 ## Quick Start
@@ -31,12 +28,11 @@ pip install -r requirements.txt
 ### 1. Define Your Models
 
 ```python
-from neo4pydantic.sync import BaseNode, BaseRelationship
+from neo4pydantic import BaseNode, BaseRelationship
 
 class Person(BaseNode):
     __label__ = "Person"
     __unique_fields__ = ["email"]
-    __indexed_fields__ = ["name", "email"]
 
     name: str
     email: str
@@ -61,7 +57,7 @@ class WorksAt(BaseRelationship):
 ### 2. Synchronous Usage
 
 ```python
-from neo4pydantic.sync import Neo4jClient
+from neo4pydantic import Neo4jClient
 
 client = Neo4jClient(uri="bolt://localhost:7687", user="neo4j", password="your_password")
 with client.session() as session:
@@ -74,7 +70,7 @@ with client.session() as session:
 ```
 
 ### 3. Asynchronous Usage
-
+Note that all asynchronous usage is the same as synchronous function
 ```python
 import asyncio
 from neo4pydantic.async_ import AsyncNeo4jClient, BaseNode, BaseRelationship
@@ -100,7 +96,6 @@ asyncio.run(main())
 
 ### Find Multiple Nodes (`find_by`)
 
-**Sync:**
 ```python
 # Find all people in New York
 people = Person.find_by(session, city="New York")
@@ -108,52 +103,44 @@ for person in people:
     print(person)
 ```
 
-**Async:**
-```python
-# Find all people in San Francisco
-people = await Person.find_by(session, city="San Francisco")
-for person in people:
-    print(person)
-```
-
----
-
 ### Find a Single Node (`find_one_by`)
 
-**Sync:**
 ```python
 # Find a person by email
 john = Person.find_one_by(session, email="john@example.com")
 print(john)
 ```
 
-**Async:**
+### Delete A Node (`find_one_by`)
+
 ```python
-# Find a person by email
-jane = await Person.find_one_by(session, email="jane@example.com")
-print(jane)
+# Delete a person
+john = Person(id=10, mail="john@example.com").delete(session)
+```
+
+### Automatically create indexes when startup
+
+```python
+from neo4pydantic import IndexManager, Neo4jClient
+
+client = Neo4jClient(uri="bolt://localhost:7687", user="neo4j", password="your_password")
+
+def init_indexes():
+    # Import your custom model here so that the IndexManger can acknowledge your model before create the indexes
+    from your_custom_model import Person, Company, WorkFor
+    
+    client.connect()
+    created_indexes = IndexManager(client.get_driver()).sync_indexes()
+    print(created_indexes)
 ```
 
 ---
 
 ### Create Relationship with Custom Parameters (`save_with_custom_params`)
 
-**Sync:**
 ```python
 relationship = WorksAt(position="Junior Developer", start_date="2022-03-01", salary=90000)
 relationship.save_with_custom_params(
-    session,
-    from_node_label=person.get_label(),
-    to_node_label=company.get_label(),
-    from_node_params={"email": person.email},
-    to_node_params={"name": company.name},
-)
-```
-
-**Async:**
-```python
-relationship = WorksAt(position="Junior Developer", start_date="2022-03-01", salary=90000)
-await relationship.save_with_custom_params(
     session,
     from_node_label=person.get_label(),
     to_node_label=company.get_label(),
