@@ -3,7 +3,7 @@ from neo4j import AsyncGraphDatabase, AsyncDriver
 from contextlib import asynccontextmanager
 
 
-class AsyncClient:
+class AsyncNeo4jClient:
     """Asynchronous Neo4j client"""
 
     def __init__(self, uri: str, user: str, password: str, database: str = "neo4j"):
@@ -19,6 +19,9 @@ class AsyncClient:
             self._driver = AsyncGraphDatabase.driver(
                 self.uri, auth=(self.user, self.password)
             )
+        return self._driver
+
+    async def get_driver(self) -> AsyncDriver:
         return self._driver
 
     async def close(self):

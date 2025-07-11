@@ -1,14 +1,13 @@
 from typing import Optional
-from neo4pydantic.sync import BaseNode, BaseRelationship, SyncClient
+from neo4pydantic import BaseNode, BaseRelationship, Neo4jClient, Index, IndexManager
 import logging
-
 logger = logging.getLogger(__name__)
 
 
 class Person(BaseNode):
     __label__ = "Person"
     __unique_fields__ = ["email"]
-    __indexed_fields__ = ["name", "email"]
+    __indexes__ = [Index(properties=["email"])]
 
     name: str
     email: str
@@ -19,6 +18,7 @@ class Person(BaseNode):
 class Company(BaseNode):
     __label__ = "Company"
     __unique_fields__ = ["name"]
+    __indexes__ = [Index(properties=["name"])]
 
     name: str
     industry: Optional[str] = None
@@ -27,6 +27,7 @@ class Company(BaseNode):
 
 class WorksAt(BaseRelationship):
     __type__ = "WORKS_AT"
+    __indexes__ = [Index(properties=["position", "start_date"])]
 
     position: str
     start_date: Optional[str] = None
@@ -35,10 +36,13 @@ class WorksAt(BaseRelationship):
 
 # Usage example
 def main():
-    client = SyncClient(
+    client = Neo4jClient(
         uri="bolt://localhost:7687", user="neo4j", password="neo4jadmin"
     )
 
+    client.connect()
+    indexes = IndexManager(client.get_driver()).sync_indexes()
+    logger.info(f"Indexes: {indexes}")
     with client.session() as session:
         # Create nodes
         person = Person(

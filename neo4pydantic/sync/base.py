@@ -25,10 +25,13 @@ class BaseNode(CoreBaseNode):
 
         return self
 
-    def delete(self, session: Session) -> bool:
+    def delete(self, session: Session, detach_mode: bool = False) -> bool:
         """Delete node from Neo4j database"""
         query, params = self.get_find_query()
-        delete_query = query.replace("RETURN n", "DELETE n")
+        if detach_mode:
+            delete_query = query.replace("RETURN n", "DETACH DELETE n")
+        else:
+            delete_query = query.replace("RETURN n", "DELETE n")
 
         result = session.run(delete_query, params)
         return result.consume().counters.nodes_deleted > 0
@@ -77,10 +80,24 @@ class BaseNode(CoreBaseNode):
 
     @classmethod
     def find_one_by(cls, session: Session, **kwargs) -> Optional["BaseNode"]:
-        """Find single node by properties"""
-        nodes = cls.find_by(session, **kwargs)
-        return nodes[0] if nodes else None
+        """Find a single node by properties"""
+        label = cls.get_label()
 
+        if not kwargs:
+            query = f"MATCH (n:{label}) RETURN n LIMIT 1"
+            params = {}
+        else:
+            prop_str = ", ".join(f"{k}: ${k}" for k in kwargs.keys())
+            query = f"MATCH (n:{label} {{{prop_str}}}) RETURN n LIMIT 1"
+            params = kwargs
+
+        result = session.run(query, params)
+        record = result.single()
+
+        if record and record["n"]:
+            return cls.from_record(dict(record["n"]))
+
+        return None
 
 class BaseRelationship(CoreBaseRelationship):
     """Synchronous Neo4j relationship operations"""

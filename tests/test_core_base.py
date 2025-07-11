@@ -7,6 +7,10 @@ class DummyEntity(base.BaseEntity):
     id: int
     name: str
 
+    @classmethod
+    def _register_indexes(cls):
+        pass
+
 
 class DummyNode(base.BaseNode):
     __label__ = "DummyNode"
